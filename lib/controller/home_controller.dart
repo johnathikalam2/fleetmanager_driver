@@ -107,6 +107,9 @@ class HomeController extends GetxController {
     prefs.remove('userName');
     prefs.remove('password');
     prefs.remove('id');
+    loginController.user = null;
+    loginController.trips.clear();
+    loginController.vehicles.clear();
     loginController.isLoggedIn(false);
     Get.offAll(() => LoginScreen());
   }
@@ -251,7 +254,7 @@ class HomeController extends GetxController {
 
                   await collection_drivers?.update(
                     where.eq('_id', ObjectId.parse(loginController.user!.id)),
-                    modify.set('pin', pinController1.text),
+                    modify.set('pin', int.parse(pinController1.text)),
                   );
                   print('Pin set');
                   createToastTop('PIN Changed successfully');

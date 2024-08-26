@@ -15,6 +15,7 @@ class MongoDB {
     collection_scratch = db!.collection(COLLECTION_SCRATCHS);
     collection_workshop = db!.collection(COLLECTION_WORKSHOPS);
     collection_issues = db!.collection(COLLECTION_ISSUES);
+    collection_charts = db!.collection(COLLECTION_CHARTS);
 
     print('Connected to MongoDB');
     return {
@@ -68,14 +69,14 @@ Future<void> updateTripStatus(driverUsername, status) async {
 Future<void> updateTripStartTime(tripNumber) async {
   final query = where.eq('tripNumber', tripNumber);
   final update = modify
-      .set('tripStartTime', DateTime.now(),);
+      .set('tripStartTimeDriver', DateTime.now(),);
   await collection_trips?.updateOne(query, update);
 }
 
 Future<void> updateTripEndTime(tripNumber) async {
   final query = where.eq('tripNumber', tripNumber);
   final update = modify
-      .set('tripEndTime', DateTime.now(),);
+      .set('tripEndTimeDriver', DateTime.now(),);
   await collection_trips?.updateOne(query, update);
 }
 

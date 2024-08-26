@@ -5,6 +5,8 @@ import 'package:fleet_manager_driver_app/model/vehicle.dart';
 import 'package:fleet_manager_driver_app/utils/color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geocoding/geocoding.dart';
+// import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -48,6 +50,8 @@ class _NavigationScreenState extends State<NavigationScreen> {
   void initState() {
     super.initState();
     selectedVehicle = widget.vehicle;
+
+
     // _getCurrentLocation();
     // _timer = Timer.periodic(Duration(seconds: 5), (Timer t) => _getCurrentLocation());
     // print("Reload");
@@ -90,6 +94,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
   //     _isCameraTargetSet = true;
   //   }
   // }
+
 
   Future<void> _pickImage() async {
     final ImagePicker _picker = ImagePicker();
@@ -561,7 +566,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
                               fuelController.text,
                               base64Image);
                         await updateTripEndTime(loginController.currentTrip!.tripNumber);
-                        loginController.currentTrip!.tripEndTime = DateTime.now();
+                        loginController.currentTrip!.tripEndTimeDriver = DateTime.now();
                           selectedVehicle.odometerReading = odometerController.text as int;
 
 
@@ -657,7 +662,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
                         ),
                       ),
                       onPressed: () async {
-                        if (controller.pinController.text == loginController.user!.pin) {
+                        if (int.parse(controller.pinController.text) == loginController.user!.pin) {
                           isValidPin = true;
                           Get.back();
                         } else {

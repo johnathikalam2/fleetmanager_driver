@@ -1,8 +1,11 @@
 class ChartData {
-  final int totalTrips;
-  final int totalHours;
+  String driverId;
+  double totalHours;
+  List<DateTime> date;
 
-
-
-  ChartData(this.totalTrips, this.totalHours);
+  ChartData(
+      this.driverId,
+      this.totalHours,
+      this.date,
+      );
 }

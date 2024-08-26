@@ -85,7 +85,7 @@ class NavDrawer extends StatelessWidget {
                       ),
                       const SizedBox(height: 5),
                       Text(
-                        loginController.user?.location !=null ? loginController.user!.location:'',
+                        loginController.user!.location ?? '',
                         style: TextStyle(fontSize: 18, color: Colors.white70, fontWeight: FontWeight.w600),
                       ),
                       const Divider(

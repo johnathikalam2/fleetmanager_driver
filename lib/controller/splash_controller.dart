@@ -103,7 +103,7 @@ class SplashController extends GetxController {
                         ),
                       ),
                       onPressed: () async {
-                        if (loginController.user?.pin == pinController.text) {
+                        if (loginController.user!.pin == int.parse(pinController.text)) {
                           while (loginController.isloading.value) {
                             await Future.delayed(Duration(seconds: 1));
                           }

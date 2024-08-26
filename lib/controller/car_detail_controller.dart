@@ -162,7 +162,7 @@ class CarDetailController extends GetxController {
                         ),
                       ),
                       onPressed: () async {
-                        if (pinController.text == loginController.user!.pin) {
+                        if (int.parse(pinController.text) == loginController.user!.pin) {
                           isValidPin = true;
                           Get.back();
                         } else {

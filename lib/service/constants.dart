@@ -7,3 +7,4 @@ const COLLECTION_VEHICLES = "vehicles";
 const COLLECTION_SCRATCHS = "scratchs";
 const COLLECTION_WORKSHOPS = "workshopMovements";
 const COLLECTION_ISSUES = "issues";
+const COLLECTION_CHARTS = "chart";

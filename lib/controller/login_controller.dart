@@ -1,3 +1,4 @@
+import 'package:fleet_manager_driver_app/model/chart.dart';
 import 'package:fleet_manager_driver_app/utils/color.dart';
 import 'package:fleet_manager_driver_app/widget/toaster_message.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,7 @@ import '../service/global.dart';
 class LoginController extends GetxController{
   User? user;
   Trip? currentTrip;
+  ChartData? chartData;
   Vehicle? currentvehicle;
   RxBool isLoggedIn = false.obs;
   final pinController1 = TextEditingController();
@@ -39,7 +41,7 @@ class LoginController extends GetxController{
 
         List<String> trips = [];
         for (var trip in driver['trips']) {
-        trips.add(trip);
+        trips.add(trip.toHexString());
       }
         user = User(
             driver['_id'].toHexString(),
@@ -62,8 +64,12 @@ class LoginController extends GetxController{
 }
 
   Future<void> fetchTripsAndVehicles() async {
+    // var globalTrips = await collection_trips
+    //     ?.find(where.eq('driverUsername', user?.userName))
+    //     .toList();
+
     var globalTrips = await collection_trips
-        ?.find(where.eq('driverUsername', user?.userName))
+        ?.find(where.oneFrom('_id', user!.trips.map((id) => ObjectId.parse(id)).toList()))
         .toList();
     if (globalTrips != null) {
       for (var trip in globalTrips) {
@@ -74,6 +80,8 @@ class LoginController extends GetxController{
           trip['tripDate'],
           trip['tripStartTime'],
           trip['tripEndTime'],
+          trip['tripStartTimeDriver'],
+          trip['tripEndTimeDriver'],
           trip['tripRoute'],
           trip['vehicleLocation'],
           trip['tripType'],
@@ -123,8 +131,40 @@ class LoginController extends GetxController{
     }
     trips.sort((a, b) => a.tripDate.compareTo(b.tripDate));
     isloading(false);
+    getChartData();
     assignTrip();
   }
+
+  getChartData()async {
+    var globalchartData = await collection_charts?.findOne(where.eq('driverId', ObjectId.parse(loggedInUserId)));
+    if (globalchartData != null) {
+      List<DateTime> tripDate = [];
+      for (var trip in globalchartData['date']) {
+        tripDate.add(trip);
+      }
+      chartData = ChartData(
+          globalchartData['driverId'].toHexString(),
+          globalchartData['totalHours'],
+          tripDate
+      );
+    }
+    else {
+      var newChartData = {
+        'driverId': ObjectId.parse(loggedInUserId),
+        'totalHours': 0.0,
+        'date': []
+      };
+      await collection_charts?.insertOne(newChartData);
+      chartData = ChartData(
+          loggedInUserId,
+          0,
+          []
+      );
+      print('New chart data created for driverId: $loggedInUserId');
+    }
+
+  }
+
 
   void assignTrip() {
     DateTime now = DateTime.now();
@@ -145,9 +185,10 @@ class LoginController extends GetxController{
     if (filteredTrips.isNotEmpty) {
       print('Filtered Trips: ${filteredTrips.length}');
       currentTrip = filteredTrips.reduce((a, b) => a.tripDate.isBefore(b.tripDate) ? a : b);
-      if (currentTrip!.tripEndTime != null) {
+      if (currentTrip!.tripEndTimeDriver == null) {
         print('Current Trip: ${currentTrip!.tripNumber}');
       } else {
+        currentTrip = null;
         print('No trips for today.');
       }
     } else {
@@ -180,7 +221,7 @@ class LoginController extends GetxController{
           loggedInUserId = driver['_id'].toHexString();
           List<String> trips = [];
           for (var trip in driver['trips']) {
-            trips.add(trip);
+            trips.add(trip.toHexString());
           }
           user = User(
             driver['_id'].toHexString(),
@@ -319,7 +360,7 @@ class LoginController extends GetxController{
                         if (pinController1.text == pinController2.text) {
                           await collection_drivers?.update(
                             where.eq('_id', ObjectId.parse(loggedInUserId)),
-                            modify.set('pin', pinController1.text),
+                            modify.set('pin', int.parse(pinController1.text)),
                           );
                           print(pinController1.text);
                           print('Pin set');

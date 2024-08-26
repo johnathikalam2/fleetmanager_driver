@@ -169,7 +169,7 @@ class LoginScreen extends StatelessWidget {
                                 onPressed: () async {
                                   User user = await controller.login(usernameController, passwordController);
                                   if(user!= null){
-                                    if (user.pin!= '') {
+                                    if (user.pin!= null) {
                                       while (controller.isloading.value) {
                                         await Future.delayed(Duration(seconds: 1));
                                       }

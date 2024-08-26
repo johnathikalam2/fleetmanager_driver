@@ -2,14 +2,14 @@ class User{
   String id;
   String userName;
   String password;
-  String pin;
+  int? pin;
   String name;
   String mobile;
-  String location;
+  String? location;
   String dlNumber;
   DateTime dlExpiry;
-  String profileImg;
-  String notes;
+  String? profileImg;
+  String? notes;
   String? status;
   List<String> trips;
 

@@ -32,7 +32,6 @@ class _HomeScreenState extends State<HomeScreen> {
   RxBool _obscureTextPin = true.obs;
   TextEditingController pinController = TextEditingController();
   int _index = 2;
-
   final carNumberController = TextEditingController();
   final vehicleNumberController = TextEditingController();
   final vehicleNameController = TextEditingController();
@@ -47,6 +46,11 @@ class _HomeScreenState extends State<HomeScreen> {
     'SEDAN',
     'LIMOUSINE'
   ];
+  int getTotalTripsThisYear() {
+    int currentYear = DateTime.now().year;
+    return loginController.chartData!.date.where((date) => date.year == currentYear).length;
+  }
+
   void onVehicleModelChanged(String? newValue) {
     if (newValue != null) {
       selectedVehicleModel.value = newValue;
@@ -62,6 +66,25 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     }
   }
+
+  List<int> getTripsPerMonthThisYear() {
+    int currentYear = DateTime.now().year;
+    List<int> tripsPerMonth = List<int>.filled(12, 0);
+
+    for (var date in loginController.chartData!.date) {
+      if (date.year == currentYear) {
+        tripsPerMonth[date.month - 1]++;
+      }
+    }
+
+    return tripsPerMonth;
+  }
+
+  int getTripsForMonth(int month) {
+    List<int> tripsPerMonth = getTripsPerMonthThisYear();
+    return tripsPerMonth[month - 1];
+  }
+
 
   @override
   void dispose() {
@@ -210,7 +233,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       onPressed: () async {
-                         if (pinController.text == loginController.user?.pin) {
+                         if (int.parse(pinController.text) == loginController.user!.pin) {
                           Get.offAll(() => NavigationScreen(selectedVehicle!));
                         } else {
                           print('Incorrect PIN');
@@ -275,8 +298,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(loginController.vehicles.firstWhere((vehicle) => vehicle.vehicleNumber == loginController.trips[index].vehicleNumber,).vehicleName, style:  TextStyle(color:Colors.white.withOpacity(.9), fontSize: 12, fontWeight: FontWeight.w300)),
-                                  Icon(loginController.trips[index].tripStartTime != null && loginController.trips[index].tripEndTime !=null ? Icons.circle :
-                                  loginController.trips[index].tripStartTime != null && loginController.trips[index].tripEndTime ==null ? Icons.drive_eta_rounded :
+                                  Icon(loginController.trips[index].tripStartTimeDriver != null && loginController.trips[index].tripEndTimeDriver !=null ? Icons.circle :
+                                  loginController.trips[index].tripStartTimeDriver != null && loginController.trips[index].tripEndTimeDriver ==null ? Icons.drive_eta_rounded :
                                   Icons.circle_outlined, color: Colors.white, size: 15),
                                 ],
                               ),
@@ -351,6 +374,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text("Date : ${DateFormat('dd/MM/yy').format(loginController.currentTrip!.tripDate)}", style: const TextStyle(color:primary, fontWeight: FontWeight.w400)),
+                      Row(
+                        children: [
+                          Text("Time : ${DateFormat('hh:mm a').format(loginController.currentTrip!.tripDate)}", style: const TextStyle(color: primary, fontWeight: FontWeight.w400),),
+                          Text(" - ${DateFormat('hh:mm a').format(loginController.currentTrip!.tripEndTime)}", style: const TextStyle(color: primary, fontWeight: FontWeight.w400),),
+                        ],
+                      ),
                       Text("Trip No : ${loginController.currentTrip!.tripNumber}", style: const TextStyle(color:primary, fontWeight: FontWeight.w400)),
                       SizedBox(height: 30),
                       Text(loginController.currentTrip!.tripRoute, style: const TextStyle(fontSize:16,color:greenlight, fontWeight: FontWeight.w800)),
@@ -370,8 +399,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       mainAxisAlignment: MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(loginController.currentTrip!.tripStartTime != null && loginController.currentTrip!.tripEndTime ==null ? "In Progress" :
-                        loginController.currentTrip!.tripStartTime != null && loginController.currentTrip!.tripEndTime != null ? "Trip Completed":"Trip to Start", style: const TextStyle(color:greenlight, fontWeight: FontWeight.w500)),
+                        Text(loginController.currentTrip!.tripStartTimeDriver != null && loginController.currentTrip!.tripEndTimeDriver ==null ? "In Progress" :
+                        loginController.currentTrip!.tripStartTimeDriver != null && loginController.currentTrip!.tripEndTimeDriver != null ? "Trip Completed":"Trip to Start", style: const TextStyle(color:greenlight, fontWeight: FontWeight.w500)),
                         SizedBox(height: 10),
                         Stack(
                           children: [
@@ -409,89 +438,89 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
   Widget buildWorkChart() {
+    List<FlSpot> spots = List.generate(12, (index) => FlSpot(index + 1, getTripsForMonth(index + 1).toDouble()));
+
     return Column(
       children: [
         Container(
-            margin: const EdgeInsets.symmetric(vertical: 0, horizontal: 30),
-            child:Column(
-                children:[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(left:10.0),
-                        child: Text("WORK CHART", style: GoogleFonts.lato(color:primary, fontSize: 16, fontWeight: FontWeight.w700)),
-                      ),
-                    ],
+          margin: const EdgeInsets.symmetric(vertical: 0, horizontal: 30),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 10.0),
+                    child: Text("WORK CHART", style: GoogleFonts.lato(color: primary, fontSize: 16, fontWeight: FontWeight.w700)),
                   ),
-                  SizedBox(height: 20),
-                  Row(
+                ],
+              ),
+              SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    height: 65,
+                    decoration: BoxDecoration(
+                      color: secondary,
+                      border: Border.all(color: greenlight, width: .25),
+                    ),
+                    child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children:[
-                        Container(
-                          height: 65,
-                          decoration: BoxDecoration(
-                            color: secondary,
-                            border: Border.all(color: greenlight, width: .25),
-                          ),
-                          child:Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children:[
-                                Padding(
-                                  padding: const EdgeInsets.only(top:5.0),
-                                  child: Text("Total Hours", style: const TextStyle(color:Colors.grey, fontSize: 8, fontWeight: FontWeight.w400)),
-                                ),
-                                Text("2723", style: const TextStyle(color:greenlight, fontSize: 12, fontWeight: FontWeight.w900)),
-                                Image.asset('assets/graph/graph1.png', width:100 ),
-                              ]
-                          ),
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 5.0),
+                          child: Text("Total Hours", style: const TextStyle(color: Colors.grey, fontSize: 8, fontWeight: FontWeight.w400)),
                         ),
-                        Container(
-                          height: 65,
-                          decoration: BoxDecoration(
-                            color: secondary,
-                            border: Border.all(color: greenlight, width: .25),
-                          ),
-                          child:Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children:[
-                                Padding(
-                                  padding: const EdgeInsets.only(top:5.0),
-                                  child: Text("Total Trips", style: const TextStyle(color:Colors.grey, fontSize: 8, fontWeight: FontWeight.w400)),
-                                ),
-                                Text("2,142,950", style: const TextStyle(color:greenlight, fontSize: 12, fontWeight: FontWeight.w900)),
-                                Image.asset('assets/graph/graph1.png', width:100 ),
-                              ]
-                          ),
-                        ),
-                        Container(
-                          height: 65,
-                          decoration: BoxDecoration(
-                            color: secondary,
-                            border: Border.all(color: greenlight, width: .25),
-                          ),
-                          child:Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children:[
-
-                                Padding(
-                                  padding: const EdgeInsets.only(top:5.0),
-                                  child: Text("This Year", style: const TextStyle(color:Colors.grey, fontSize: 8, fontWeight: FontWeight.w400)),
-                                ),
-                                Text("232,000", style: const TextStyle(color:greenlight, fontSize: 12, fontWeight: FontWeight.w900)),
-                                Image.asset('assets/graph/graph1.png', width:100),
-                              ]
-                          ),
-                        ),
-                      ]
+                        Text(loginController.chartData!.totalHours.toString(), style: const TextStyle(color: greenlight, fontSize: 12, fontWeight: FontWeight.w900)),
+                        Image.asset('assets/graph/graph1.png', width: 100),
+                      ],
+                    ),
                   ),
-                ]
-            )
+                  Container(
+                    height: 65,
+                    decoration: BoxDecoration(
+                      color: secondary,
+                      border: Border.all(color: greenlight, width: .25),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 5.0),
+                          child: Text("Total Trips", style: const TextStyle(color: Colors.grey, fontSize: 8, fontWeight: FontWeight.w400)),
+                        ),
+                        Text(loginController.chartData!.date.length.toString(), style: const TextStyle(color: greenlight, fontSize: 12, fontWeight: FontWeight.w900)),
+                        Image.asset('assets/graph/graph1.png', width: 100),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    height: 65,
+                    decoration: BoxDecoration(
+                      color: secondary,
+                      border: Border.all(color: greenlight, width: .25),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 5.0),
+                          child: Text("This Year", style: const TextStyle(color: Colors.grey, fontSize: 8, fontWeight: FontWeight.w400)),
+                        ),
+                        Text(getTotalTripsThisYear().toString(), style: const TextStyle(color: greenlight, fontSize: 12, fontWeight: FontWeight.w900)),
+                        Image.asset('assets/graph/graph1.png', width: 100),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
         SizedBox(height: 30),
-        //buildChart(context),
         Container(
-          margin: const EdgeInsets.only(top: 20, right: 30,left:20),
+          margin: const EdgeInsets.only(top: 20, right: 30, left: 20),
           height: 120,
           width: MediaQuery.of(context).size.width * 0.9,
           child: LineChart(
@@ -508,7 +537,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
                 drawVerticalLine: false,
               ),
-              borderData: FlBorderData(show: false,),
+              borderData: FlBorderData(show: false),
               titlesData: FlTitlesData(
                 show: true,
                 topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -533,16 +562,7 @@ class _HomeScreenState extends State<HomeScreen> {
               backgroundColor: secondary,
               lineBarsData: [
                 LineChartBarData(
-                  spots: [
-                    FlSpot(1, 2500),
-                    FlSpot(2, 3500),
-                    FlSpot(3, 500),
-                    FlSpot(4, 4000),
-                    FlSpot(5, 4500),
-                    FlSpot(6, 5500),
-                    FlSpot(7, 3500),
-                    FlSpot(8, 4500),
-                  ],
+                  spots: spots,
                   dotData: FlDotData(
                     getDotPainter: (spot, percent, barData, index) {
                       return FlDotCirclePainter(
@@ -553,6 +573,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   color: primary,
                   barWidth: 2,
+
                 ),
               ],
             ),

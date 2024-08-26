@@ -104,7 +104,7 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
                             await updateTripStatus(loginController.user!.userName, loginController.currentTrip!.tripNumber);
                             await updateKeyCustody(selectedVehicle.vehicleNumber, loginController.user!.userName);
                             await updateTripStartTime(loginController.currentTrip!.tripNumber);
-                            loginController.currentTrip!.tripStartTime = DateTime.now();
+                            loginController.currentTrip!.tripStartTimeDriver = DateTime.now();
                             loginController.user!.status = loginController.currentTrip!.tripNumber;
                             Get.offAll(() => NavigationScreen(selectedVehicle));
                           }

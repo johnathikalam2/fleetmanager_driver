@@ -6,7 +6,9 @@ class Trip{
   String driverUsername;
   DateTime tripDate;
   DateTime? tripStartTime;
-  DateTime? tripEndTime;
+  DateTime tripEndTime;
+  DateTime? tripStartTimeDriver;
+  DateTime? tripEndTimeDriver;
   String tripRoute;
   String? vehicleLocation;
   String tripType;
@@ -27,6 +29,8 @@ class Trip{
       this.tripDate,
       this.tripStartTime,
       this.tripEndTime,
+      this.tripStartTimeDriver,
+      this.tripEndTimeDriver,
       this.tripRoute,
       this.vehicleLocation,
       this.tripType,

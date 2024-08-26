@@ -39,7 +39,9 @@ class MainScreen extends StatelessWidget {
                   child: Flexible(
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(15),
-                      child:  loginController.user?.profileImg != '' ? Image.asset(loginController.user!.profileImg,) : Icon(Icons.person, color: greenlight, size: 40.0,),
+                      child:  loginController.user!.profileImg != null
+                          ? Image.asset(loginController.user!.profileImg??'',)
+                          : Icon(Icons.person, color: greenlight, size: 40.0,),
                     ),
                   ),
                 ),
