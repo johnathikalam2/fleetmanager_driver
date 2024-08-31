@@ -35,55 +35,61 @@ class _HomeScreenState extends State<HomeScreen> {
   final carNumberController = TextEditingController();
   final vehicleNumberController = TextEditingController();
   final vehicleNameController = TextEditingController();
-  Rx<String> selectedVehicleModel = Rx<String>('SUV');
   bool isLoading = false;
   late final Vehicle? selectedVehicle = loginController.currentvehicle;
 
-  Rx<File?> _imageFile = Rx<File?>(null);
-  final List<String> vehicleModels = [
-    'SUV',
-    'MPV',
-    'SEDAN',
-    'LIMOUSINE'
-  ];
-  int getTotalTripsThisYear() {
-    int currentYear = DateTime.now().year;
-    return loginController.chartData!.date.where((date) => date.year == currentYear).length;
+  late DateTime now;
+  late DateTime today;
+
+  // @override
+  // void initState() {
+  //   super.initState();
+  // }
+
+  @override
+  void initState() {
+    super.initState();
+    now = DateTime.now();
+    today = DateTime(now.year, now.month, now.day);
+    controller.isinitloading.value = true;
+    // controller.spots = List.generate(12, (index) => FlSpot(index + 1, getTripsForMonth(index + 1).toDouble()));
+    // getTotalTripsThisYear();
+    // print(controller.spots);
+    controller.isinitloading.value = false;
   }
 
-  void onVehicleModelChanged(String? newValue) {
-    if (newValue != null) {
-      selectedVehicleModel.value = newValue;
-    }
+  String getFirstWords(String text, int len) {
+    List<String> words = text.split(' ');
+    return words.length > len ? '${words[0]} ${words[1]}' : text;
   }
-  Future<void> _pickImage() async {
-    final ImagePicker _picker = ImagePicker();
-    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
-
-    if (image != null) {
-      setState(() {
-        _imageFile.value = File(image.path);
-      });
-    }
-  }
-
-  List<int> getTripsPerMonthThisYear() {
-    int currentYear = DateTime.now().year;
-    List<int> tripsPerMonth = List<int>.filled(12, 0);
-
-    for (var date in loginController.chartData!.date) {
-      if (date.year == currentYear) {
-        tripsPerMonth[date.month - 1]++;
-      }
-    }
-
-    return tripsPerMonth;
-  }
-
-  int getTripsForMonth(int month) {
-    List<int> tripsPerMonth = getTripsPerMonthThisYear();
-    return tripsPerMonth[month - 1];
-  }
+  // void getTotalTripsThisYear() {
+  //   int currentYear = DateTime.now().year;
+  //   controller.totalTripsThisYear = loginController.chartData==null?0:loginController.chartData!.date.where((date) => date.year == currentYear).length;
+  // }
+  //
+  // List<int> getTripsPerMonthThisYear() {
+  //   int currentYear = DateTime
+  //       .now()
+  //       .year;
+  //   List<int> tripsPerMonth = List<int>.filled(12, 0);
+  //
+  //   if (loginController.chartData == null) {
+  //     return tripsPerMonth;
+  //   }
+  //   else {
+  //     for (var date in loginController.chartData!.date) {
+  //       if (date.year == currentYear) {
+  //         tripsPerMonth[date.month - 1]++;
+  //       }
+  //     }
+  //     return tripsPerMonth;
+  //   }
+  // }
+  //
+  // int getTripsForMonth(int month) {
+  //   List<int> tripsPerMonth = getTripsPerMonthThisYear();
+  //   return tripsPerMonth[month - 1];
+  // }
 
 
   @override
@@ -97,10 +103,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: secondary,
-      body: SingleChildScrollView(
+      body: controller.isinitloading.value?Center(child: CircularProgressIndicator(color: greenlight,)):
+      SingleChildScrollView(
         child: Column(
           children: [
-            buildTripCard(),
+            loginController.trips.length != 0? buildTripCard(): Padding(
+              padding: const EdgeInsets.symmetric(vertical:60),
+              child: Center(child: Text("No trips assigned",style: TextStyle(color: greenlight),)),
+            ),
             SizedBox(height: 20),
             loginController.currentTrip != null ? buildCurrentTrip() : Container(),
             buildWorkChart(),
@@ -108,6 +118,8 @@ class _HomeScreenState extends State<HomeScreen> {
             Container(
                 margin: const EdgeInsets.only(bottom: 20, left: 30, right: 30),
                 child: Divider(color: greenlight.withOpacity(.3), thickness: 1)),
+            // loginController.user!.status == null ?
+            loginController.currentTrip != null ?
             loginController.user!.status == null ?
             Container(
               child:Row(
@@ -115,8 +127,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 children:[
                   GestureDetector(
                     onTap: () {
-                      loginController.currentTrip == null ?
-                          createToastBottom("No trip to start") :
+                      // loginController.currentTrip == null ?
+                      //     createToastBottom("No trip to start") :
                         showTakeAKeyOverLay();
                     },
                     child: Container(
@@ -132,8 +144,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-            )
-                :
+            ) :
+            //resume trip
             Container(
               child:Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -155,8 +167,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-            ),
-            SizedBox(height: 30),
+            ):Container(),
+            SizedBox(height: 20),
           ],
         ),
       ),
@@ -234,7 +246,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       onPressed: () async {
                          if (int.parse(pinController.text) == loginController.user!.pin) {
-                          Get.offAll(() => NavigationScreen(selectedVehicle!));
+                          if(selectedVehicle != null) {
+                            Get.offAll(() =>
+                                NavigationScreen(selectedVehicle!));
+                          }else{
+                            createToastTop('No vehicle selected');
+                          }
                         } else {
                           print('Incorrect PIN');
                           createToastTop('Incorrect PIN');
@@ -297,7 +314,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(loginController.vehicles.firstWhere((vehicle) => vehicle.vehicleNumber == loginController.trips[index].vehicleNumber,).vehicleName, style:  TextStyle(color:Colors.white.withOpacity(.9), fontSize: 12, fontWeight: FontWeight.w300)),
+                                  Text(getFirstWords(loginController.vehicles.firstWhere((vehicle) => vehicle.vehicleNumber == loginController.trips[index].vehicleNumber,).vehicleName,2), style:  TextStyle(color:Colors.white.withOpacity(.9), fontSize: 12, fontWeight: FontWeight.w300)),
                                   Icon(loginController.trips[index].tripStartTimeDriver != null && loginController.trips[index].tripEndTimeDriver !=null ? Icons.circle :
                                   loginController.trips[index].tripStartTimeDriver != null && loginController.trips[index].tripEndTimeDriver ==null ? Icons.drive_eta_rounded :
                                   Icons.circle_outlined, color: Colors.white, size: 15),
@@ -307,7 +324,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(loginController.trips[index].tripRoute, style: const TextStyle(color:Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                                  // Text("${loginController.trips[index].tripStartLocation} - ${loginController.trips[index].tripDestination.}", style: const TextStyle(color:Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                  Text("${getFirstWords(loginController.trips[index].tripStartLocation,2)}  ${getFirstWords(loginController.trips[index].tripDestination,2)}",
+                                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
                                   Container(
                                     width: MediaQuery.of(context).size.width * 0.20,
                                     color: greenlight,
@@ -365,7 +384,7 @@ class _HomeScreenState extends State<HomeScreen> {
             borderRadius: BorderRadius.circular(20),
           ),
           margin: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
+          padding: const EdgeInsets.only(top: 10, bottom:10, right: 20, left:20),
           child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -373,28 +392,40 @@ class _HomeScreenState extends State<HomeScreen> {
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Date : ${DateFormat('dd/MM/yy').format(loginController.currentTrip!.tripDate)}", style: const TextStyle(color:primary, fontWeight: FontWeight.w400)),
-                      Row(
-                        children: [
-                          Text("Time : ${DateFormat('hh:mm a').format(loginController.currentTrip!.tripDate)}", style: const TextStyle(color: primary, fontWeight: FontWeight.w400),),
-                          Text(" - ${DateFormat('hh:mm a').format(loginController.currentTrip!.tripEndTime)}", style: const TextStyle(color: primary, fontWeight: FontWeight.w400),),
-                        ],
-                      ),
-                      Text("Trip No : ${loginController.currentTrip!.tripNumber}", style: const TextStyle(color:primary, fontWeight: FontWeight.w400)),
-                      SizedBox(height: 30),
-                      Text(loginController.currentTrip!.tripRoute, style: const TextStyle(fontSize:16,color:greenlight, fontWeight: FontWeight.w800)),
+                      Text("Trip No: ${loginController.currentTrip!.tripNumber}", style: const TextStyle(color:primary, fontWeight: FontWeight.w400)),
+                      SizedBox(height: 10,),
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.35,
+                        child: Text(loginController.currentTrip!.tripStartLocation,
+                            // overflow: TextOverflow.ellipsis,
+                            maxLines: 2,
+                            style: const TextStyle(fontSize:16,color:greenlight, fontWeight: FontWeight.w800)),),
+                      Text("${DateFormat('dd/MM/yy').format(loginController.currentTrip!.tripDate)}", style: const TextStyle(color:primary, fontWeight: FontWeight.w400, fontSize: 13)),
+                      Text("${DateFormat('hh:mm a').format(loginController.currentTrip!.tripDate)}", style: const TextStyle(color: primary, fontWeight: FontWeight.w400, fontSize: 13),),
+                      SizedBox(height: 15,),
+
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.35,
+                        child: Text(loginController.currentTrip!.tripDestination,
+                            // overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                          style: const TextStyle(fontSize:16,color:greenlight, fontWeight: FontWeight.w800)),),
+                      Text("${DateFormat('dd/MM/yy').format(loginController.currentTrip!.tripEndTime)}", style: const TextStyle(color:primary, fontWeight: FontWeight.w400)),
+                      Text("${DateFormat('hh:mm a').format(loginController.currentTrip!.tripEndTime)}", style: const TextStyle(color: primary, fontWeight: FontWeight.w400),),
+
+                      SizedBox(height: 10),
                       Text(loginController.currentTrip!.tripType, style: const TextStyle(fontSize:12, color:primary, fontWeight: FontWeight.w400)),
                       SizedBox(height: 8),
                       SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.4,
+                        width: MediaQuery.of(context).size.width * 0.35,
                           child: Text(loginController.currentTrip!.notification ?? "",
-                              maxLines: 3,
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(color:Colors.grey, fontSize: 13, fontWeight: FontWeight.w400)),),
                     ],
                   ),
                   SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.36,
+                    width: MediaQuery.of(context).size.width * 0.40,
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -415,7 +446,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               bottom: 10,
                               left: 10,
                               child: Text(
-                                loginController.currentvehicle!.vehicleName,
+                                "${getFirstWords(loginController.currentvehicle!.vehicleName,2)}",
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 14,
@@ -438,7 +469,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
   Widget buildWorkChart() {
-    List<FlSpot> spots = List.generate(12, (index) => FlSpot(index + 1, getTripsForMonth(index + 1).toDouble()));
+    // List<FlSpot> spots = List.generate(12, (index) => FlSpot(index + 1, getTripsForMonth(index + 1).toDouble()));
 
     return Column(
       children: [
@@ -472,7 +503,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           padding: const EdgeInsets.only(top: 5.0),
                           child: Text("Total Hours", style: const TextStyle(color: Colors.grey, fontSize: 8, fontWeight: FontWeight.w400)),
                         ),
-                        Text(loginController.chartData!.totalHours.toString(), style: const TextStyle(color: greenlight, fontSize: 12, fontWeight: FontWeight.w900)),
+                        Text(loginController.chartData==null?'0':loginController.chartData!.totalHours.toStringAsFixed(2), style: const TextStyle(color: greenlight, fontSize: 12, fontWeight: FontWeight.w900)),
                         Image.asset('assets/graph/graph1.png', width: 100),
                       ],
                     ),
@@ -490,7 +521,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           padding: const EdgeInsets.only(top: 5.0),
                           child: Text("Total Trips", style: const TextStyle(color: Colors.grey, fontSize: 8, fontWeight: FontWeight.w400)),
                         ),
-                        Text(loginController.chartData!.date.length.toString(), style: const TextStyle(color: greenlight, fontSize: 12, fontWeight: FontWeight.w900)),
+                        Text(loginController.chartData==null?'0':loginController.chartData!.date.length.toString(), style: const TextStyle(color: greenlight, fontSize: 12, fontWeight: FontWeight.w900)),
                         Image.asset('assets/graph/graph1.png', width: 100),
                       ],
                     ),
@@ -508,7 +539,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           padding: const EdgeInsets.only(top: 5.0),
                           child: Text("This Year", style: const TextStyle(color: Colors.grey, fontSize: 8, fontWeight: FontWeight.w400)),
                         ),
-                        Text(getTotalTripsThisYear().toString(), style: const TextStyle(color: greenlight, fontSize: 12, fontWeight: FontWeight.w900)),
+                        Text(loginController.totalTripsThisYear.toString(), style: const TextStyle(color: greenlight, fontSize: 12, fontWeight: FontWeight.w900)),
                         Image.asset('assets/graph/graph1.png', width: 100),
                       ],
                     ),
@@ -562,7 +593,7 @@ class _HomeScreenState extends State<HomeScreen> {
               backgroundColor: secondary,
               lineBarsData: [
                 LineChartBarData(
-                  spots: spots,
+                  spots: loginController.spots,
                   dotData: FlDotData(
                     getDotPainter: (spot, percent, barData, index) {
                       return FlDotCirclePainter(
@@ -717,7 +748,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              loginController.currentvehicle!.vehicleName,
+                              "${getFirstWords(loginController.currentvehicle!.vehicleName,2)}",
                               style: GoogleFonts.lato(color: primary,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 24),),

@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:fleet_manager_driver_app/model/chart.dart';
 import 'package:fleet_manager_driver_app/utils/color.dart';
 import 'package:fleet_manager_driver_app/widget/toaster_message.dart';
@@ -10,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../model/trip.dart';
 import '../model/user.dart';
 import '../model/vehicle.dart';
+import '../model/vehicleLocation.dart';
 import '../service/global.dart';
 
 
@@ -26,6 +28,8 @@ class LoginController extends GetxController{
   RxList<Trip> trips = RxList.empty();
   RxList<Vehicle> vehicles = RxList.empty();
   RxBool isloading = false.obs;
+  List<FlSpot> spots = [];
+  int? totalTripsThisYear;
 
 @override
   Future<void> onInit() async {
@@ -35,32 +39,40 @@ class LoginController extends GetxController{
     if (prefs.containsKey('userName') && prefs.containsKey('password') && prefs.containsKey('id'))
       print(prefs.getString('userName')!);
       loggedInUserId = prefs.getString('id')!;
+
+    if (loggedInUserId != null) {
       var driver = await collection_drivers?.findOne(where.eq('_id', ObjectId.parse(loggedInUserId)));
+
+    // var driver = await collection_drivers?.findOne(where.eq('_id', ObjectId.parse(loggedInUserId)));
       if (driver != null) {
         isLoggedIn(true);
-
+        print("driver adding started................");
         List<String> trips = [];
         for (var trip in driver['trips']) {
         trips.add(trip.toHexString());
       }
         user = User(
             driver['_id'].toHexString(),
-            driver['driverUsername'],
+            driver['driverId'],
             driver['driverPassword'],
-            driver['pin'],
+            driver['driverPin'],
             driver['driverName'],
             driver['mobileNumber'],
             driver['location'],
             driver['driverLicenceNumber'],
-            driver['driverLicenceExpiretDate'],
+            driver['driverLicenceExpiryDate'],
             driver['driverPhoto'],
             driver['notes'],
             driver['status'],
             trips,
         );
+        print("driver Adder............");
       }
     isLoggedIn(true);
     fetchTripsAndVehicles();
+    } else {
+      print('User ID not found in SharedPreferences');
+    }
 }
 
   Future<void> fetchTripsAndVehicles() async {
@@ -71,18 +83,23 @@ class LoginController extends GetxController{
     var globalTrips = await collection_trips
         ?.find(where.oneFrom('_id', user!.trips.map((id) => ObjectId.parse(id)).toList()))
         .toList();
-    if (globalTrips != null) {
+
+    if (globalTrips!.isNotEmpty) {
       for (var trip in globalTrips) {
+        print('fetching trips started......${trip['tripNumber']}');
+        print(trip["tripEndDate"]);
         trips.add(Trip(
           trip['tripNumber'],
           trip['vehicleNumber'],
-          trip['driverUsername'],
+          trip['driverId'],
           trip['tripDate'],
-          trip['tripStartTime'],
-          trip['tripEndTime'],
+          // trip['tripStartTime'],
+          trip['tripEndDate'],
           trip['tripStartTimeDriver'],
           trip['tripEndTimeDriver'],
-          trip['tripRoute'],
+          // trip['tripRoute'],
+          trip['tripStartLocation'],
+          trip['tripDestination'],
           trip['vehicleLocation'],
           trip['tripType'],
           trip['tripRemunaration'],
@@ -99,6 +116,7 @@ class LoginController extends GetxController{
           var vehicle = await collection_vehicles
               ?.findOne(where.eq('vehicleNumber', trip['vehicleNumber']));
           if (vehicle != null) {
+            print("fetching vehicle started.............. ${vehicle['vehicleName']}");
             List<String> vehiclePhoto =
             List<String>.from(vehicle['vehiclePhotos'] ?? []);
             print(vehicle['vehicleName']);
@@ -116,13 +134,15 @@ class LoginController extends GetxController{
               vehicle['istimaraPhoto'],
               vehiclePhoto,
               vehicle['vehicleStatus'],
-              vehicle['vehicleLocation'],
+              vehicle['vehicleLocation'] != null ? VehicleLocation.fromMap(vehicle['vehicleLocation']) : null,
               vehicle['notesAboutVehicle'],
               vehicle['rentalAgreement'],
               vehicle['lastServiceDate'],
               vehicle['tireChangeDate'],
               vehicle['keyCustody'],
             ));
+            print("vehicle ${vehicle['vehicleName']} added.............. ");
+
           }
         } else {
           print('Vehicle already added');
@@ -130,7 +150,7 @@ class LoginController extends GetxController{
       }
     }
     trips.sort((a, b) => a.tripDate.compareTo(b.tripDate));
-    isloading(false);
+    // isloading(false);
     getChartData();
     assignTrip();
   }
@@ -162,7 +182,39 @@ class LoginController extends GetxController{
       );
       print('New chart data created for driverId: $loggedInUserId');
     }
+    spots = List.generate(12, (index) => FlSpot(index + 1, getTripsForMonth(index + 1).toDouble()));
+    getTotalTripsThisYear();
+    print(spots);
+    isloading(false);
+  }
 
+  void getTotalTripsThisYear() {
+    int currentYear = DateTime.now().year;
+    totalTripsThisYear = chartData==null?0:chartData!.date.where((date) => date.year == currentYear).length;
+  }
+
+  List<int> getTripsPerMonthThisYear() {
+    int currentYear = DateTime
+        .now()
+        .year;
+    List<int> tripsPerMonth = List<int>.filled(12, 0);
+
+    if (chartData == null) {
+      return tripsPerMonth;
+    }
+    else {
+      for (var date in chartData!.date) {
+        if (date.year == currentYear) {
+          tripsPerMonth[date.month - 1]++;
+        }
+      }
+      return tripsPerMonth;
+    }
+  }
+
+  int getTripsForMonth(int month) {
+    List<int> tripsPerMonth = getTripsPerMonthThisYear();
+    return tripsPerMonth[month - 1];
   }
 
 
@@ -177,14 +229,17 @@ class LoginController extends GetxController{
     //     .reduce((a, b) => a.tripDate.isBefore(b.tripDate) ? a : b);
 
     var filteredTrips = trips.where((trip) =>
-    trip.tripDate.year == today.year &&
-        trip.tripDate.month == today.month &&
-        trip.tripDate.day == today.day
+    trip.tripEndTimeDriver == null &&
+        trip.tripDate.year == today.year &&
+        (trip.tripDate.month == today.month || trip.tripEndTime.month >= today.month)
+        // trip.tripEndTime.day >= today.day
+        // trip.tripDate.day == today.day
     );
 
     if (filteredTrips.isNotEmpty) {
       print('Filtered Trips: ${filteredTrips.length}');
       currentTrip = filteredTrips.reduce((a, b) => a.tripDate.isBefore(b.tripDate) ? a : b);
+      print('Current Trip: ${currentTrip!.tripNumber}');
       if (currentTrip!.tripEndTimeDriver == null) {
         print('Current Trip: ${currentTrip!.tripNumber}');
       } else {
@@ -201,6 +256,7 @@ class LoginController extends GetxController{
     } else {
       print('No trips for today.');
     }
+
   }
 
   void asignVehicle() {
@@ -215,9 +271,9 @@ class LoginController extends GetxController{
 
   login(usernameController, passwordController) async {
     isloading(true);
-    var driver = await collection_drivers?.findOne(where.eq('driverUsername', usernameController.text));
-      if (driver !=null){
-        if (usernameController.text==driver['driverUsername'] && passwordController.text==driver['driverPassword']){
+    var driver = await collection_drivers?.findOne(where.eq('driverId', usernameController.text));
+      if (driver != null){
+        if (usernameController.text==driver['driverId'] && passwordController.text==driver['driverPassword']){
           loggedInUserId = driver['_id'].toHexString();
           List<String> trips = [];
           for (var trip in driver['trips']) {
@@ -225,14 +281,14 @@ class LoginController extends GetxController{
           }
           user = User(
             driver['_id'].toHexString(),
-            driver['driverUsername'],
+            driver['driverId'],
             driver['driverPassword'],
-            driver['pin'],
+            driver['driverPin'],
             driver['driverName'],
             driver['mobileNumber'],
             driver['location'],
             driver['driverLicenceNumber'],
-            driver['driverLicenceExpiretDate'],
+            driver['driverLicenceExpiryDate'],
             driver['driverPhoto'],
             driver['notes'],
             driver['status'],
@@ -243,7 +299,7 @@ class LoginController extends GetxController{
           prefs.setString('password', passwordController.text);
           prefs.setString('id', loggedInUserId);
           fetchTripsAndVehicles();
-          return user;
+          return true;
         }
       }
 
@@ -360,7 +416,7 @@ class LoginController extends GetxController{
                         if (pinController1.text == pinController2.text) {
                           await collection_drivers?.update(
                             where.eq('_id', ObjectId.parse(loggedInUserId)),
-                            modify.set('pin', int.parse(pinController1.text)),
+                            modify.set('driverPin', int.parse(pinController1.text)),
                           );
                           print(pinController1.text);
                           print('Pin set');

@@ -167,9 +167,9 @@ class LoginScreen extends StatelessWidget {
                                 backgroundColor: MaterialStateProperty.all(primary),
                               ),
                                 onPressed: () async {
-                                  User user = await controller.login(usernameController, passwordController);
-                                  if(user!= null){
-                                    if (user.pin!= null) {
+                                 bool isuser = await controller.login(usernameController, passwordController);
+                                  if(isuser){
+                                    if (controller.user!.pin!= null) {
                                       while (controller.isloading.value) {
                                         await Future.delayed(Duration(seconds: 1));
                                       }
@@ -180,6 +180,7 @@ class LoginScreen extends StatelessWidget {
                                       controller.showSetPinOverLay();
                                     }
                                   }
+
                                   else{
                                     createToastTop('Invalid username or password');
                                   }

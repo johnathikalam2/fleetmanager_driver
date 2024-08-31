@@ -1,3 +1,6 @@
+import 'package:fleet_manager_driver_app/model/vehicleLocation.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+
 class Vehicle{
   String vehicleName;
   String vehicleNumber;
@@ -5,19 +8,19 @@ class Vehicle{
   DateTime istimaraDueDate;
   String vehicleType;
   String vehiclePhoto;
-  bool ownVehicle;
-  String insurancePhoto;
-  int lastTyreChangeOdoReading;
+  bool? ownVehicle;
+  String? insurancePhoto;
+  int? lastTyreChangeOdoReading;
   int odometerReading;
-  String istimaraPhoto;
+  String? istimaraPhoto;
   List<String>  vehiclePhotos;
-  String vehicleStatus;
-  String vehicleLocation;
-  String notesAboutVehicle;
-  String rentalAgreement;
-  DateTime lastServiceDate;
-  DateTime tireChangeDate;
-  String keyCustody;
+  String? vehicleStatus;
+  VehicleLocation? vehicleLocation;
+  String? notesAboutVehicle;
+  String? rentalAgreement;
+  DateTime? lastServiceDate;
+  DateTime? tireChangeDate;
+  String? keyCustody;
 
   Vehicle(
   this.vehicleName,

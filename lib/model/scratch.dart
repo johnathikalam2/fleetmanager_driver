@@ -7,11 +7,11 @@ class Scratch{
   String  scratchFV;
   String  scratchTV;
   String  scratchBV;
-  List<String>  scratchOrgLsv;
-  List<String>  scratchOrgRsv;
-  List<String>  scratchOrgFv;
-  List<String>  scratchOrgTv;
-  List<String>  scratchOrgBv;
+  List<String>?  scratchOrgLsv;
+  List<String>?  scratchOrgRsv;
+  List<String>?  scratchOrgFv;
+  List<String>?  scratchOrgTv;
+  List<String>?  scratchOrgBv;
 
   Scratch(
      this.vehicleNumber,

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:fleet_manager_driver_app/utils/color.dart';
+import 'package:fleet_manager_driver_app/widget/toaster_message.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -31,15 +32,23 @@ class _BodyConditionScreenState extends State<BodyConditionScreen> {
       body:ListView(
         scrollDirection: Axis.vertical,
         children: [
+          //front View
+          scratchData.scratchFV.startsWith('assets')?
+          Container(
+            margin: EdgeInsets.symmetric(vertical: 30),
+            child:Center(child:Text("No scratches on front",style: TextStyle(color: primary),)),
+          ):
           GestureDetector(
-            onTap: (){
+            onTap: scratchData.scratchOrgLsv?.length !=0 ? (){
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
                   return buildIssueAlert('FRONT VIEW',scratchData.scratchOrgLsv);
                 },
               );
-            },
+            }:(){
+              createToastTop("No scratch images found");
+              },
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0,vertical: 10),
               child: Container(
@@ -77,15 +86,23 @@ class _BodyConditionScreenState extends State<BodyConditionScreen> {
             ),
           ),
 
+          //backview
+          scratchData.scratchBV.startsWith('assets')?
+          Container(
+            margin: EdgeInsets.symmetric(vertical: 30),
+            child:Center(child:Text("No scratches on back",style: TextStyle(color: primary))),
+          ):
           GestureDetector(
-            onTap: (){
+            onTap: scratchData.scratchOrgBv?.length !=0 ? (){
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
                   return buildIssueAlert('BACK VIEW',scratchData.scratchOrgBv);
                 },
               );
-            },
+            }:(){
+              createToastTop("No scratch images found");
+              },
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0,vertical: 10),
               child: Container(
@@ -124,15 +141,23 @@ class _BodyConditionScreenState extends State<BodyConditionScreen> {
             ),
           ),
 
+          //rightsideview
+          scratchData.scratchRSV.startsWith('assets') ?
+          Container(
+            margin: EdgeInsets.symmetric(vertical: 30),
+            child:Center(child:Text("No scratches on right side",style: TextStyle(color: primary))),
+          ):
           GestureDetector(
-            onTap: (){
+            onTap: scratchData.scratchOrgRsv?.length !=0 ? (){
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
                   return buildIssueAlert('RIGHT SIDE VIEW',scratchData.scratchOrgRsv);
                 },
               );
-            },
+            }:(){
+              createToastTop("No scratch images found");
+              },
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0,vertical: 10),
               child: Container(
@@ -170,14 +195,22 @@ class _BodyConditionScreenState extends State<BodyConditionScreen> {
             ),
           ),
 
+          //leftsideview
+          scratchData.scratchLSV.startsWith('assets') ?
+          Container(
+            margin: EdgeInsets.symmetric(vertical: 30),
+            child:Center(child:Text("No scratches on left side",style: TextStyle(color: primary))),
+          ):
           GestureDetector(
-            onTap: (){
+            onTap: scratchData.scratchOrgLsv?.length!=0 ? (){
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
                   return buildIssueAlert('LEFT SIDE VIEW',scratchData.scratchOrgLsv);
                 },
               );
+            }:(){
+              createToastTop("No scratch images found");
             },
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0,vertical: 10),
@@ -215,15 +248,23 @@ class _BodyConditionScreenState extends State<BodyConditionScreen> {
             ),
           ),
 
+          //topview
+          scratchData.scratchTV.startsWith('assets')?
+          Container(
+            margin: EdgeInsets.symmetric(vertical: 30),
+            child:Center(child:Text("No scratches on top",style: TextStyle(color: primary))),
+          ):
           GestureDetector(
-            onTap: (){
+            onTap: scratchData.scratchOrgTv?.length!=0 ?(){
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
                   return buildIssueAlert('TOP VIEW',scratchData.scratchOrgTv);
                 },
               );
-            },
+            }:(){
+              createToastTop("No scratch images found");
+              },
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0,vertical: 10),
               child: Container(

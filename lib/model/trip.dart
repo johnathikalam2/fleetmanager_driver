@@ -5,11 +5,13 @@ class Trip{
   String vehicleNumber;
   String driverUsername;
   DateTime tripDate;
-  DateTime? tripStartTime;
+  // DateTime? tripStartTime;
   DateTime tripEndTime;
   DateTime? tripStartTimeDriver;
   DateTime? tripEndTimeDriver;
-  String tripRoute;
+  // String tripRoute;
+  String tripStartLocation;
+  String tripDestination;
   String? vehicleLocation;
   String tripType;
   int tripRemunaration;
@@ -27,11 +29,13 @@ class Trip{
       this.vehicleNumber,
       this.driverUsername,
       this.tripDate,
-      this.tripStartTime,
+      // this.tripStartTime,
       this.tripEndTime,
       this.tripStartTimeDriver,
       this.tripEndTimeDriver,
-      this.tripRoute,
+      // this.tripRoute,
+      this.tripStartLocation,
+      this.tripDestination,
       this.vehicleLocation,
       this.tripType,
       this.tripRemunaration,

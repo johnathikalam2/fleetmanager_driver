@@ -42,58 +42,90 @@ class _NavigationScreenState extends State<NavigationScreen> {
   final odometerController = TextEditingController();
   final fuelController = TextEditingController();
 
-  // Timer? _timer;
-
+  LatLng _selectedLocation = LatLng(9.175249926873791, 76.5014099702239);
+  String? _currentPlaceName;
+  String? _currentPlaceStreet;
+  String? _currentPlaceAdministrativeArea;
+  String? _currentPlaceCountry;
+  String? _currentPlacePostalCode;
+  String? _currentPlaceSubLocality;
+  String? _currentPlaceLocality;
+  String? _currentPlaceSubAdministrativeArea;
+  String? _currentPlaceIsoCountryCode;
+  String? _currentPlaceSubThoroughfare;
+  String? _currentPlaceThoroughfare;
 
 
   @override
   void initState() {
     super.initState();
     selectedVehicle = widget.vehicle;
-
-
-    // _getCurrentLocation();
-    // _timer = Timer.periodic(Duration(seconds: 5), (Timer t) => _getCurrentLocation());
-    // print("Reload");
+    _selectedLocation = selectedVehicle.vehicleLocation != null
+        ? LatLng(selectedVehicle.vehicleLocation!.latitude, selectedVehicle.vehicleLocation!.longitude)
+        : LatLng(9.175249926873791, 76.5014099702239);
+    locationDetails();
+    //snackbarMessage("Please select the location on the map");
   }
 
-  // @override
-  // void dispose() {
-  //   _timer?.cancel();
-  //   super.dispose();
-  // }
-  //
-  // GoogleMapController? _controller;
-  // late  LatLng _currentLatLng = LatLng(0, 0);
-  // String _currentPlaceName = '';
-  // bool _isCameraTargetSet = false;
-  //
-  // Future<void> _getCurrentLocation() async {
-  //   await Geolocator.checkPermission();
-  //   await Geolocator.requestPermission();
-  //
-  //   final Position position = await Geolocator.getCurrentPosition(
-  //     desiredAccuracy: LocationAccuracy.high,
-  //   );
-  //   List<Placemark> placemarks = await placemarkFromCoordinates(
-  //       position.latitude, position.longitude
-  //   );setState(() {
-  //     _currentLatLng = LatLng(position.latitude, position.longitude);
-  //     _currentPlaceName = placemarks.first.name ?? 'Unknown place';
-  //   });
-  //
-  //   if (!_isCameraTargetSet) {
-  //     _controller?.animateCamera(
-  //       CameraUpdate.newCameraPosition(
-  //         CameraPosition(
-  //           target: _currentLatLng,
-  //           zoom: 14,
-  //         ),
-  //       ),
-  //     );
-  //     _isCameraTargetSet = true;
-  //   }
-  // }
+  double calculateTotalHours(DateTime startTime, DateTime endTime) {
+    Duration duration = endTime.difference(startTime);
+    return duration.inHours + (duration.inMinutes % 60) / 60.0;
+  }
+
+  void snackbarMessage(String message) {
+    final snackBar = SnackBar(
+      backgroundColor: secondary,
+      content: Text(message, style: GoogleFonts.lato(color: primary, fontSize: 15, fontWeight: FontWeight.w600)),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+  Future<void> _onMapTapped(LatLng location) async {
+    await updateLocation(widget.vehicle.vehicleNumber, location.latitude, location.longitude);
+    List<Placemark> placemarks = await placemarkFromCoordinates(
+        location.latitude, location.longitude
+    );
+    setState(() {
+      _selectedLocation = location;
+      _currentPlaceName = placemarks[0].name ?? "";
+      _currentPlaceStreet = placemarks[0].street ?? "";
+      _currentPlaceAdministrativeArea = placemarks[0].administrativeArea ?? "";
+      _currentPlaceCountry = placemarks[0].country ?? "";
+      _currentPlacePostalCode = placemarks[0].postalCode ?? "";
+      _currentPlaceSubLocality = placemarks[0].subLocality ?? "";
+      _currentPlaceLocality = placemarks[0].locality ?? "";
+      _currentPlaceSubAdministrativeArea = placemarks[0].subAdministrativeArea ?? "";
+      _currentPlaceIsoCountryCode = placemarks[0].isoCountryCode ?? "";
+      _currentPlaceSubThoroughfare = placemarks[0].subThoroughfare ?? "";
+      _currentPlaceThoroughfare = placemarks[0].thoroughfare ?? "";
+
+
+
+    });
+    print('Selected location: ${location.latitude}, ${location.longitude}');
+  }
+
+  Future<void> locationDetails() async {
+    List<Placemark> placemarks = await placemarkFromCoordinates(
+        _selectedLocation.latitude, _selectedLocation.longitude
+    );
+    setState(() {
+      _currentPlaceName = placemarks[0].name ?? "";
+      _currentPlaceStreet = placemarks[0].street ?? "";
+      _currentPlaceAdministrativeArea = placemarks[0].administrativeArea ?? "";
+      _currentPlaceCountry = placemarks[0].country ?? "";
+      _currentPlacePostalCode = placemarks[0].postalCode ?? "";
+      _currentPlaceSubLocality = placemarks[0].subLocality ?? "";
+      _currentPlaceLocality = placemarks[0].locality ?? "";
+      _currentPlaceSubAdministrativeArea = placemarks[0].subAdministrativeArea ?? "";
+      _currentPlaceIsoCountryCode = placemarks[0].isoCountryCode ?? "";
+      _currentPlaceSubThoroughfare = placemarks[0].subThoroughfare ?? "";
+      _currentPlaceThoroughfare = placemarks[0].thoroughfare ?? "";
+
+
+
+    });
+  }
 
 
   Future<void> _pickImage() async {
@@ -129,27 +161,10 @@ class _NavigationScreenState extends State<NavigationScreen> {
   }
 
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-/*      appBar: AppBar(
-        title:  Container(
-          margin: const EdgeInsets.symmetric(vertical:10,horizontal: 20),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-            color: greenlight.withOpacity(.1),
-          ),
-          child: TextFormField(
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              labelText: 'Search',
-              labelStyle: const TextStyle(color: primary, fontSize: 15, fontWeight: FontWeight.w600),
-              prefixIcon: const Icon(Icons.search),
-            ),
-          ),
-        ),
-        backgroundColor: secondary,
-      ),*/
       backgroundColor: secondary,
       body: Container(
         //margin: const EdgeInsets.only(top:10),
@@ -164,36 +179,23 @@ class _NavigationScreenState extends State<NavigationScreen> {
         ),
         child: GoogleMap(
           initialCameraPosition: CameraPosition(
-            target: LatLng(37.42796133580664, -122.085749655962),
+            target: _selectedLocation,
             zoom: 15,
           ),
-          // onMapCreated: (GoogleMapController controller) {
-          //   _controller = controller;
-          // },
-          // initialCameraPosition: CameraPosition(
-          //   target: _currentLatLng,
-          //   zoom: 15,
-          // ),
+          onTap: _onMapTapped,
           markers: {
             Marker(
-              markerId: const MarkerId('marker_1'),
-              position: const LatLng(37.42796133580664, -122.085749655962),
-              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-              infoWindow: const InfoWindow(
-                title: 'Google',
-                snippet: 'Googleplex',),
+              markerId: MarkerId('selected_location'),
+              position: _selectedLocation,
+              icon: BitmapDescriptor.defaultMarkerWithHue(
+                  BitmapDescriptor.hueRed),
+              infoWindow: InfoWindow(
+                title: '$_currentPlaceName',
+                snippet: 'Lat: ${_selectedLocation.latitude.toPrecision(
+                    2)}, Lng: ${_selectedLocation.longitude.toPrecision(2)}',
+              ),
             ),
-          },
-          // markers: {
-          //   Marker(
-          //     markerId: const MarkerId('current'),
-          //     position: _currentLatLng,
-          //     infoWindow: InfoWindow(
-          //       title: 'You are here',
-          //       snippet: _currentPlaceName,
-          //     ),
-          //   ),
-          // },
+          }
         ),
       ),
       floatingActionButton: Stack(
@@ -218,7 +220,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
           ),
           Positioned(
             right: 5,
-            bottom: 120, // Adjust this value as needed
+            bottom: 120,
             child: Container(
                 decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.transparent),
                 padding: const EdgeInsets.only(left:4,right:4,top:4,bottom:45),
@@ -258,11 +260,74 @@ class _NavigationScreenState extends State<NavigationScreen> {
                 ),
               ),
           ),
+          // Positioned(
+          //   right: 5,
+          //   bottom: 260, // Adjust this value as needed
+          //   child: Container(
+          //     decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.transparent),
+          //     padding: const EdgeInsets.only(left:4,right:4,top:4,bottom:45),
+          //     child: FloatingActionButton(
+          //       backgroundColor: Colors.white,
+          //       onPressed: () {
+          //         showDialog(
+          //           context: context,
+          //           builder: (BuildContext context) {
+          //             return WidgetbuildLocation();
+          //           },
+          //         );
+          //       },
+          //       child: const Icon(Icons.location_pin, color: Colors.red, size: 30,),
+          //       shape: RoundedRectangleBorder(
+          //         borderRadius: BorderRadius.circular(100.0),
+          //       ),
+          //     ),
+          //   ),
+          // ),
         ],
       )
     );
   }
 
+  WidgetbuildLocation(){
+    return SingleChildScrollView(
+        child: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return AlertDialog(
+                backgroundColor: secondary,
+                title: Center(child: Text("LOCATION", style: GoogleFonts.lato(color: primary, fontSize: 18, fontWeight: FontWeight.w700))),
+                content: Column(
+                  children: [
+                    _currentPlaceName == ''?SizedBox(height: 0,):Text(_currentPlaceName!,style: TextStyle(color: greenlight),),
+                    _currentPlaceStreet == ''?SizedBox(height: 0,):Text(_currentPlaceStreet!,style: TextStyle(color: greenlight),),
+                    _currentPlacePostalCode == ''?SizedBox(height: 0,):Text(_currentPlacePostalCode!,style: TextStyle(color: greenlight),),
+                    _currentPlaceSubLocality == ''?SizedBox(height: 0,):Text(_currentPlaceSubLocality!,style: TextStyle(color: greenlight),),
+                    _currentPlaceLocality == ''?SizedBox(height: 0,):Text(_currentPlaceLocality!,style: TextStyle(color: greenlight),),
+                    _currentPlaceSubAdministrativeArea == ''?SizedBox(height: 0,):Text(_currentPlaceSubAdministrativeArea!,style: TextStyle(color: greenlight),),
+                    _currentPlaceSubThoroughfare == ''?SizedBox(height: 0,):Text(_currentPlaceSubThoroughfare!,style: TextStyle(color: greenlight),),
+                    Row(mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _currentPlaceAdministrativeArea == ''?SizedBox(height: 0,):Text('${_currentPlaceAdministrativeArea!},',style: TextStyle(color: greenlight),),
+                          SizedBox(width: 5,),
+                          _currentPlaceCountry == ''?SizedBox(height: 0,):Text(_currentPlaceCountry!,style: TextStyle(color: greenlight),),
+                          SizedBox(width: 5,),
+                          _currentPlaceIsoCountryCode == ''?SizedBox(height: 0,):Text('(${_currentPlaceIsoCountryCode!})',style: TextStyle(color: greenlight),),
+                        ]
+                    ),
+                  ],
+                ),
+                  actions: [
+                  TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    },
+                    child: Text("Ok", style: TextStyle(color: greenlight, fontSize: 15, fontWeight: FontWeight.w600),),
+                  ),
+                  ],
+              );
+            }
+        )
+    );
+  }
   Widget buildSosAlert() {
     return SingleChildScrollView(
       child: StatefulBuilder(
@@ -525,7 +590,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
                   odometerController.clear();
                   fuelController.clear();
                   controller.issueController.clear();
-                  _odometerimageFile = Rx<File?>(null);
+                   _odometerimageFile = Rx<File?>(null);
                   _imageFile = Rx<File?>(null);
                   Navigator.of(context).pop();
                 },
@@ -552,6 +617,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
                           print(e);
                         }
                       }
+                      print("trip issues updated..................");
                       try{
                         final Uint8List bytes = await _odometerimageFile.value!.readAsBytes();
                         String base64Image = base64Encode(
@@ -559,23 +625,41 @@ class _NavigationScreenState extends State<NavigationScreen> {
                           await updateVehicleReading(
                               selectedVehicle.vehicleNumber,
                               odometerController.text);
+                          print('updateVehicleReading....................');
                         await updateKeyCustody(selectedVehicle.vehicleNumber, 'Available');
+                        print('updateKeyCustody...........................');
                         await updateTripEnd(
                               loginController.currentTrip!.tripNumber,
                               odometerController.text,
                               fuelController.text,
                               base64Image);
+                        print('updateTripEnd..............................');
                         await updateTripEndTime(loginController.currentTrip!.tripNumber);
+                        print("updateTripEndTime...........................");
                         loginController.currentTrip!.tripEndTimeDriver = DateTime.now();
-                          selectedVehicle.odometerReading = odometerController.text as int;
-
-
+                          selectedVehicle.odometerReading = int.parse(odometerController.text);
                       }
                       catch(e){
                         print(e);
                       }
                       await updateTripStatus(
                           loginController.user!.userName, null);
+                      print('updateTripStatus............................');
+                      var result = calculateTotalHours(
+                          loginController.currentTrip!.tripStartTimeDriver!,
+                          DateTime.now());
+                      // int.parse(loginController.chartData!.totalHours.toString())
+                      loginController.chartData!.totalHours+=result;
+
+                      print('Total hours: ${loginController.chartData!.totalHours}');
+                      // print('Total hours: ${loginController.chartData!.totalHours.runtimeType}');
+
+                      await updateChartData(
+                        loginController.user!.id,
+                          loginController.chartData!.totalHours,
+                          DateTime.now());
+                      print("updateChartData............................");
+                      loginController.currentTrip = null;
                       loginController.user!.status = null;
                       _imageFile = Rx<File?>(null);
                       Get.offAll(() => MainScreen());
@@ -729,7 +813,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
                                   Icon(Icons.location_pin, color: greenlight, size: 25),
                                   const SizedBox(width: 10),
                                   Expanded(
-                                    child: Text('Lucknow', style: TextStyle(color: primary, fontSize: 18, fontWeight: FontWeight.w600),
+                                    child: Text(_currentPlaceSubAdministrativeArea!=''?_currentPlaceSubAdministrativeArea!:_currentPlaceSubLocality!=''?_currentPlaceSubLocality!:_currentPlaceLocality!, style: TextStyle(color: primary, fontSize: 18, fontWeight: FontWeight.w600),
                                         maxLines: 2, overflow: TextOverflow.ellipsis),
                                   ),
                                 ]

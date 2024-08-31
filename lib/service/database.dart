@@ -1,4 +1,5 @@
 
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 
 import 'constants.dart';
@@ -17,13 +18,23 @@ class MongoDB {
     collection_issues = db!.collection(COLLECTION_ISSUES);
     collection_charts = db!.collection(COLLECTION_CHARTS);
 
-    print('Connected to MongoDB');
-    return {
-      'db': db,
-      'collection_drivers': collection_drivers,
-    };
+    var driver = await collection_drivers?.findOne(where.eq('driverId', 'DR000'));
+    if (driver !=null){
+      print(driver['driverId']);
+      print(driver['driverPassword']);
+      print(driver['driverName']);
+    }
+    else{
+      print("no driver with driverId DR000");
+    }
+
+      print('Connected to MongoDB');
+      return {
+        'db': db,
+        'collection_drivers': collection_drivers,
+      };
+    }
   }
-}
 
 Future<void> updateTempVehicleReading(vehicleNumber, odometerReading) async {
   final query = where.eq('vehicleNumber', vehicleNumber);
@@ -44,6 +55,14 @@ Future<void> updateKeyCustody(vehicleNumber, keyCustody) async {
       .set('keyCustody', keyCustody);
   await collection_vehicles?.updateOne(query, update);
 }
+Future<void> updateLocation(vehicleNumber, latitude, longitude) async {
+  final query = where.eq('vehicleNumber', vehicleNumber);
+  final update = modify.set('vehicleLocation', {
+    'latitude': latitude,
+    'longitude': longitude,
+  });
+  await collection_vehicles?.updateOne(query, update);
+}
 Future<void> updateTripBegin(tripNumber, odometerReading, fuelReading, image) async {
   final query = where.eq('tripNumber', tripNumber);
   final update = modify
@@ -61,7 +80,7 @@ Future<void> updateTripEnd(tripNumber, odometerReading, fuelReading, image) asyn
   await collection_trips?.updateOne(query, update);
 }
 Future<void> updateTripStatus(driverUsername, status) async {
-  final query = where.eq('driverUsername', driverUsername);
+  final query = where.eq('driverId', driverUsername);
   final update = modify.set('status', status,);
   await collection_drivers?.updateOne(query, update);
 }
@@ -80,11 +99,18 @@ Future<void> updateTripEndTime(tripNumber) async {
   await collection_trips?.updateOne(query, update);
 }
 
+Future<void> updateChartData(id, totalHours, date) async {
+  final query = where.eq('driverId', ObjectId.parse(id));
+  final update = modify
+      .set('totalHours', totalHours,)
+      .push('date', date,);
+  await collection_charts?.updateOne(query, update);
+}
 Future<void> reportIssue(String tripNumber, String vehicleNumber, String driverUsername, String issueType, String issueDetail, String issueImage) async {
   final newIssue = {
     'tripNumber': tripNumber,
     'vehicleNumber': vehicleNumber,
-    'driverUsername': driverUsername,
+    'driverId': driverUsername,
     'issueType': issueType,
     'issueDetail': issueDetail,
     'issueImage': issueImage,

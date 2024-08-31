@@ -1,13 +1,13 @@
 class workshopMovement{
   String vehicleNumber;
   DateTime workshopVisitDate;
-  String visitType;
+  String? visitType;
   String nextOilChange;
   String nextTyreChange;
-  int noOfDays;
+  int? noOfDays;
   int odometerReading;
-  String complaintDetail;
-  int amountSpent;
+  String? complaintDetail;
+  int? amountSpent;
 
   workshopMovement(
     this.vehicleNumber,

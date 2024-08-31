@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 
@@ -31,6 +32,12 @@ class HomeController extends GetxController {
   RxBool _obscureText1 = true.obs;
   RxBool _obscureText2 = true.obs;
   RxBool _obscureText = true.obs;
+  RxBool isinitloading = false.obs;
+  List<FlSpot> spots = [];
+  int? totalTripsThisYear;
+
+
+
 
 
   Rx<File?> _imageFile = Rx<File?>(null);
@@ -113,6 +120,8 @@ class HomeController extends GetxController {
     loginController.isLoggedIn(false);
     Get.offAll(() => LoginScreen());
   }
+
+
 
   Future<void> changePin() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -254,7 +263,7 @@ class HomeController extends GetxController {
 
                   await collection_drivers?.update(
                     where.eq('_id', ObjectId.parse(loginController.user!.id)),
-                    modify.set('pin', int.parse(pinController1.text)),
+                    modify.set('driverPin', int.parse(pinController1.text)),
                   );
                   print('Pin set');
                   createToastTop('PIN Changed successfully');
