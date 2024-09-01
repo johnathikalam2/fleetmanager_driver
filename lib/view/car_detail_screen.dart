@@ -104,7 +104,7 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
               RadioListTile<String>(
                 title: const Text('Yes', style: TextStyle(color: primary,fontSize: 14, fontWeight: FontWeight.w500)),
                 value: 'yes',
-
+                activeColor: primary,
                 groupValue: _issueSelection,
                 onChanged: (value) {
                   setState(() {
@@ -115,6 +115,7 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
               RadioListTile<String>(
                 title: const Text('No', style: TextStyle(color: primary,fontSize: 14, fontWeight: FontWeight.w500)),
                 value: 'no',
+                activeColor: primary,
                 groupValue: _issueSelection,
                 onChanged: (value) {
                   setState(() {
