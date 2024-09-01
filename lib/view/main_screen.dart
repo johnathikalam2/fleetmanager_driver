@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:fleet_manager_driver_app/utils/color.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -18,7 +20,6 @@ class MainScreen extends StatelessWidget {
    @override
   Widget build(BuildContext context) {
     return Scaffold(
-
           appBar: AppBar(
             toolbarHeight: 60,
             leading: Builder(
@@ -36,13 +37,13 @@ class MainScreen extends StatelessWidget {
               actions: [
                 Padding(
                   padding: const EdgeInsets.only(top:10,right: 30),
-                  child: Flexible(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(15),
-                      child:  loginController.user!.profileImg != null
-                          ? Image.asset(loginController.user!.profileImg!,)
-                          : Icon(Icons.person, color: greenlight, size: 40.0,),
-                    ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(15),
+                    child:
+                    loginController.user!.profileImg != null
+                        ? Image.memory(base64Decode(loginController.user!.profileImg!))
+                    // Image.asset(loginController.user!.profileImg!,)
+                        : const Icon(Icons.person, color: greenlight, size: 40.0,),
                   ),
                 ),
               ],

@@ -9,6 +9,7 @@ import 'package:fleet_manager_driver_app/view/home_screen.dart';
 import 'package:fleet_manager_driver_app/widget/toaster_message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -17,36 +18,39 @@ import 'package:image_picker/image_picker.dart';
 import '../controller/car_detail_controller.dart';
 import '../controller/login_controller.dart';
 import '../model/vehicle.dart';
-import '../model/workShopMovement.dart';
+// import '../model/workShopMovement.dart';
 import '../service/database.dart';
 import 'navigation_screen.dart';
 
 class CarDetailScreen extends StatefulWidget {
-  const CarDetailScreen(this.vehicle,this.workshop,this._isStored,{Key? key}) : super(key: key);
+  const CarDetailScreen(this.vehicle,this._isStored,{Key? key}) : super(key: key);
   final Vehicle vehicle;
-  final workshopMovement workshop;
+  // final workshopMovement workshop;
   final bool _isStored;
+
 
   @override
   State<CarDetailScreen> createState() => _CarDetailScreenState();
 }
 Rx<File?> _imageFile = Rx<File?>(null);
+Rx<File?> _scratchImageFile = Rx<File?>(null);
 
 class _CarDetailScreenState extends State<CarDetailScreen> {
   final CarDetailController controller = Get.put(CarDetailController());
   LoginController loginController = Get.put(LoginController());
   HomeController homeController = Get.put(HomeController());
   late final Vehicle selectedVehicle;
-  late final workshopMovement workshopDetail;
+  // late final workshopMovement workshopDetail;
   final odometerController = TextEditingController();
   final fuelController = TextEditingController();
+  String? _issueSelection;
 
 
   @override
   void initState() {
     super.initState();
     selectedVehicle = widget.vehicle;
-    workshopDetail = widget.workshop;
+    // workshopDetail = widget.workshop;
     controller.getScratchdata(selectedVehicle);
   }
 
@@ -59,6 +63,16 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
       if (image != null) {
         setState(() {
           _imageFile.value = File(image.path);
+        });
+      }
+    }
+    Future<void> _pickScratchImage() async {
+      final ImagePicker _picker = ImagePicker();
+      final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+
+      if (image != null) {
+        setState(() {
+          _scratchImageFile.value = File(image.path);
         });
       }
     }
@@ -79,6 +93,127 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
               Divider(color: greenlight.withOpacity(.3),thickness: 1,),
               SizedBox(height: 10,),
               buildCheckBox(),
+              SizedBox(height: 15,),
+              Divider(color: greenlight.withOpacity(.3),thickness: 1,),
+              SizedBox(height: 15,),
+              Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Text('Do you want to report any new scratches?', style: TextStyle(color: primary, fontWeight: FontWeight.w500)),
+              ),
+
+              RadioListTile<String>(
+                title: const Text('Yes', style: TextStyle(color: primary,fontSize: 14, fontWeight: FontWeight.w500)),
+                value: 'yes',
+
+                groupValue: _issueSelection,
+                onChanged: (value) {
+                  setState(() {
+                    _issueSelection = value;
+                  });
+                },
+              ),
+              RadioListTile<String>(
+                title: const Text('No', style: TextStyle(color: primary,fontSize: 14, fontWeight: FontWeight.w500)),
+                value: 'no',
+                groupValue: _issueSelection,
+                onChanged: (value) {
+                  setState(() {
+                    _issueSelection = value;
+                  });
+                },
+              ),
+              if (_issueSelection == 'yes') ...[
+                TextFormField(
+                  controller: controller.issueController,
+                  decoration: InputDecoration(
+                    labelText: 'Enter Scratch Details',
+                    labelStyle: TextStyle(color: primary, fontSize: 13, fontWeight: FontWeight.w500),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: primary.withOpacity(.7)),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: primary),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20,),
+
+                Obx(() =>
+                _scratchImageFile.value != null
+                    ?
+                Image.file(_scratchImageFile.value!)
+                    : Container(),
+                ),
+                SizedBox(height: 5,),
+                Center(
+                  child: ElevatedButton(
+                    style: ButtonStyle(
+                      elevation: MaterialStateProperty.all(5),
+                      backgroundColor: WidgetStateProperty.all(primary),
+                    ),
+                    onPressed: () async {
+                      await _pickScratchImage();
+                      setState(() {});
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.add_a_photo_rounded, color: Colors.white, size: 18,),
+                        const SizedBox(width: 10),
+                        Text(
+                          'SCRATCH  IMAGE',
+                          style: GoogleFonts.lato(fontSize: 12, color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                _scratchImageFile.value != null
+                    ? Column(
+                      children: [
+                        SizedBox(height: 10,),
+                        ElevatedButton(
+                          style: ButtonStyle(
+                            elevation: MaterialStateProperty.all(5),
+                            backgroundColor: WidgetStateProperty.all(greenlight),
+                          ),
+                          onPressed: () async {
+                            if (_issueSelection == 'yes') {
+                              try {
+                                final Uint8List bytes = await _scratchImageFile.value!
+                                    .readAsBytes();
+                                final Uint8List compressedBytes = await FlutterImageCompress.compressWithList(
+                                  bytes,
+                                  // minWidth: 600,
+                                  // minHeight: 800,
+                                  quality: 65,
+                                );
+                                String base64Image = base64Encode(compressedBytes);
+                                // print("byte converted...................");
+                                await reportIssue(
+                                loginController.currentTrip!.tripNumber,
+                                selectedVehicle.vehicleNumber,
+                                loginController.user!.userName,
+                                "Trip begin scratches",
+                                controller.issueController.text,
+                                base64Image);
+                                // print("Uploaded.............................");
+                              } catch (e) {
+                                print(e);
+                              }
+                            }
+                            controller.issueController.clear();
+                            _scratchImageFile = Rx<File?>(null);
+                            createToastTop("Scratch image uploaded successfully. If you want to add other new scratches, you can do it in the same way.");
+                          },
+                          child: Text("UPLOAD", style: GoogleFonts.lato(fontSize: 12, color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ):
+                    Container(),
+              ],
+
               SizedBox(height: 15,),
               Divider(color: greenlight.withOpacity(.3),thickness: 1,),
               SizedBox(height: 15,),
@@ -309,27 +444,27 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
           );
         }),
 
-        widget._isStored?Container(
-          width: MediaQuery.of(context).size.width*.85,
-          decoration: BoxDecoration(
-            color: greenlight.withOpacity(.1),
-            borderRadius: BorderRadius.circular(5),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("Alignment and Balancing",style: TextStyle(color: primary.withOpacity(.7), fontSize: 13,),),
-                Padding(
-                  padding: const EdgeInsets.only(right: 10.0),
-                  child: Text("${int.parse(loginController.currentvehicle!.odometerReading.toString()) -(int.parse(workshopDetail.odometerReading.toString()) )} Kms",style: TextStyle(color: primary.withOpacity(.7), fontSize: 13,),),
-                  //child: Text("1000 Kms",style: TextStyle(color: primary.withOpacity(.7), fontSize: 13,),),
-                ),
-              ],
-            ),
-          ),
-        ) : Container(),
+        // widget._isStored?Container(
+        //   width: MediaQuery.of(context).size.width*.85,
+        //   decoration: BoxDecoration(
+        //     color: greenlight.withOpacity(.1),
+        //     borderRadius: BorderRadius.circular(5),
+        //   ),
+        //   child: Padding(
+        //     padding: const EdgeInsets.all(8.0),
+        //     child: Row(
+        //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        //       children: [
+        //         Text("Alignment and Balancing",style: TextStyle(color: primary.withOpacity(.7), fontSize: 13,),),
+        //         Padding(
+        //           padding: const EdgeInsets.only(right: 10.0),
+        //           child: Text("${int.parse(loginController.currentvehicle!.odometerReading.toString()) -(int.parse(workshopDetail.odometerReading.toString()) )} Kms",style: TextStyle(color: primary.withOpacity(.7), fontSize: 13,),),
+        //           //child: Text("1000 Kms",style: TextStyle(color: primary.withOpacity(.7), fontSize: 13,),),
+        //         ),
+        //       ],
+        //     ),
+        //   ),
+        // ) : Container(),
       ],
     );
   }

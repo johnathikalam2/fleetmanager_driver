@@ -19,6 +19,7 @@ class CarDetailController extends GetxController {
   static CarDetailController get to => Get.find();
   LoginController loginController = Get.put(LoginController());
   TextEditingController pinController = TextEditingController();
+  TextEditingController issueController = TextEditingController();
   Scratch? scratchData;
   RxBool _obscureText = true.obs;
   bool isDashboard = false;

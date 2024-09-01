@@ -62,35 +62,6 @@ class _HomeScreenState extends State<HomeScreen> {
     List<String> words = text.split(' ');
     return words.length > len ? '${words[0]} ${words[1]}' : text;
   }
-  // void getTotalTripsThisYear() {
-  //   int currentYear = DateTime.now().year;
-  //   controller.totalTripsThisYear = loginController.chartData==null?0:loginController.chartData!.date.where((date) => date.year == currentYear).length;
-  // }
-  //
-  // List<int> getTripsPerMonthThisYear() {
-  //   int currentYear = DateTime
-  //       .now()
-  //       .year;
-  //   List<int> tripsPerMonth = List<int>.filled(12, 0);
-  //
-  //   if (loginController.chartData == null) {
-  //     return tripsPerMonth;
-  //   }
-  //   else {
-  //     for (var date in loginController.chartData!.date) {
-  //       if (date.year == currentYear) {
-  //         tripsPerMonth[date.month - 1]++;
-  //       }
-  //     }
-  //     return tripsPerMonth;
-  //   }
-  // }
-  //
-  // int getTripsForMonth(int month) {
-  //   List<int> tripsPerMonth = getTripsPerMonthThisYear();
-  //   return tripsPerMonth[month - 1];
-  // }
-
 
   @override
   void dispose() {
@@ -767,13 +738,13 @@ class _HomeScreenState extends State<HomeScreen> {
                             SizedBox(height: 10),
                             Center(
                               child: ElevatedButton(
-                                onPressed: () async {
-                                  await controller.getWorkshopData(loginController.currentvehicle!);
-                                  while (controller.isLoading) {
-                                    await Future.delayed(Duration(seconds: 1));
-                                  }
+                                onPressed: () {
+                                  // await controller.getWorkshopData(loginController.currentvehicle!);
+                                  // while (controller.isLoading) {
+                                  //   await Future.delayed(Duration(seconds: 1));
+                                  // }
                                   Get.offAll(() =>
-                                      CarDetailScreen(loginController.currentvehicle!,controller.workshop!, true));
+                                      CarDetailScreen(loginController.currentvehicle!, true));
                                 },
                                 style: ButtonStyle(
                                   elevation: WidgetStateProperty.all(8),

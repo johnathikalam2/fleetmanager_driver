@@ -48,6 +48,7 @@ dependencies:
   url_launcher: ^6.3.0
   mongo_dart: ^0.10.3
   geocoding: ^3.0.0
+  flutter_image_compress: ^2.3.0
 #  geolocator: ^10.1.1
 
 #  get: ^4.6.6

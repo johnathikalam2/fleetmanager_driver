@@ -19,13 +19,14 @@ import '../model/vehicle.dart';
 import '../model/workShopMovement.dart';
 import '../service/global.dart';
 import '../view/login_screen.dart';
+import '../view/main_screen.dart';
 import '../widget/toaster_message.dart';
 import 'login_controller.dart';
 
 class HomeController extends GetxController {
   workshopMovement? workshop;
   LoginController loginController = Get.put(LoginController());
-  bool isLoading = false;
+  // bool isLoading = false;
   final pinController1 = TextEditingController();
   final pinController2 = TextEditingController();
   final passwordController = TextEditingController();
@@ -38,7 +39,9 @@ class HomeController extends GetxController {
 
 
 
-
+  void refreshPage() {
+    Get.off(MainScreen());
+  }
 
   Rx<File?> _imageFile = Rx<File?>(null);
   final List<String> vehicleModels = [
@@ -48,42 +51,42 @@ class HomeController extends GetxController {
     'LIMOUSINE'
   ]; // Example list of vehicle models
 
-  Future<void> getWorkshopData(Vehicle selectedVehicle) async {
-    isLoading = true;
-    if (selectedVehicle.vehicleNumber == null) {
-      print('Vehicle number is null');
-      return;
-    }
-    try {
-      var workshopmovement = await collection_workshop?.findOne(
-        where.eq('vehicleNumber', selectedVehicle.vehicleNumber),
-      );
-
-      if (workshopMovement != null) {
-        print('Workshop data found for vehicle number: ${selectedVehicle.vehicleNumber}');
-        workshop = workshopMovement(
-          workshopmovement?['vehicleNumber'],
-          workshopmovement?['workshopVisitDate'],
-          workshopmovement?['visitType'],
-          workshopmovement?['nextOilChange'],
-          workshopmovement?['nextTyreChange'],
-          workshopmovement?['noOfDays'],
-          workshopmovement?['odometerReading'],
-          workshopmovement?['complaintDetail'],
-          workshopmovement?['amountSpent']
-        );
-        print(workshop);
-        print(workshop!.odometerReading);
-        print(workshop!.amountSpent);
-        print('Workshop data fetched');
-        isLoading = false;
-      } else {
-        print('No workshop data found for vehicle number: ${selectedVehicle.vehicleNumber}');
-      }
-    } catch (e) {
-      print('An error occurred: $e');
-    }
-  }
+  // Future<void> getWorkshopData(Vehicle selectedVehicle) async {
+  //   isLoading = true;
+  //   if (selectedVehicle.vehicleNumber == null) {
+  //     print('Vehicle number is null');
+  //     return;
+  //   }
+  //   try {
+  //     var workshopmovement = await collection_workshop?.findOne(
+  //       where.eq('vehicleNumber', selectedVehicle.vehicleNumber),
+  //     );
+  //
+  //     if (workshopMovement != null) {
+  //       print('Workshop data found for vehicle number: ${selectedVehicle.vehicleNumber}');
+  //       workshop = workshopMovement(
+  //         workshopmovement?['vehicleNumber'],
+  //         workshopmovement?['workshopVisitDate'],
+  //         workshopmovement?['visitType'],
+  //         workshopmovement?['nextOilChange'],
+  //         workshopmovement?['nextTyreChange'],
+  //         workshopmovement?['noOfDays'],
+  //         workshopmovement?['odometerReading'],
+  //         workshopmovement?['complaintDetail'],
+  //         workshopmovement?['amountSpent']
+  //       );
+  //       print(workshop);
+  //       print(workshop!.odometerReading);
+  //       print(workshop!.amountSpent);
+  //       print('Workshop data fetched');
+  //       isLoading = false;
+  //     } else {
+  //       print('No workshop data found for vehicle number: ${selectedVehicle.vehicleNumber}');
+  //     }
+  //   } catch (e) {
+  //     print('An error occurred: $e');
+  //   }
+  // }
 
   Future <void> uploadTempVehicle(vehicleNumber, image, vehicleName, vechileType) async {
     await collection_temp_vehicles?.insert({
@@ -100,7 +103,7 @@ class HomeController extends GetxController {
 
   Future<void> _pickImage() async {
     final ImagePicker _picker = ImagePicker();
-    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
       _imageFile.value = File(image.path);
@@ -292,5 +295,144 @@ class HomeController extends GetxController {
       ),
     );
   }
-}
 
+Future<void> editProfile() async {
+  TextEditingController mobileController = TextEditingController(
+    text: loginController.user?.mobile != null ? loginController.user!.mobile.toString() : '',
+  );
+  TextEditingController locationController = TextEditingController(
+    text: loginController.user?.location != null ? loginController.user!.location.toString() : '',
+  );
+    Get.back();
+    Get.dialog(
+      AlertDialog(
+        title: Text('Edit Profile', style: TextStyle(
+            color: primary, fontSize: 20, fontWeight: FontWeight.w600)),
+        backgroundColor: secondary,
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                onTap: ()async {
+                  await _pickImage();
+                  },
+                child: Obx(() => _imageFile.value != null
+                    ? Image.file(_imageFile.value!)
+                    : Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(30),
+                    color: Colors.transparent,
+                  ),
+                  child:
+                  loginController.user!.profileImg != null
+                      ? Image.memory(base64Decode(loginController.user!.profileImg!))
+                      : const Icon(Icons.person, color: greenlight, size: 50.0,),
+                ),
+                ),
+
+              ),
+              const SizedBox(height: 10),
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(30),
+                  color: greenlight.withOpacity(.1),
+                ),
+                child: TextFormField(
+                      controller: mobileController,
+                      maxLength: 10,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: <TextInputFormatter>[
+                        FilteringTextInputFormatter.digitsOnly
+                      ],
+                      decoration: InputDecoration(
+                        counterText: "",
+                        prefixIcon: const Icon(Icons.dialpad_outlined),
+                        prefixIconColor: primary,
+                        border: InputBorder.none,
+                        labelText: 'Mobile Number',
+                        labelStyle: const TextStyle(color: primary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600),
+                      ),
+                    )
+
+              ),
+              const SizedBox(height: 10),
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(30),
+                  color: greenlight.withOpacity(.1),
+                ),
+                child: TextFormField(
+                      controller: locationController,
+                      decoration: InputDecoration(
+                        counterText: "",
+                        prefixIcon: const Icon(Icons.location_pin),
+                        prefixIconColor: primary,
+                        border: InputBorder.none,
+                        labelText: 'Location',
+                        labelStyle: const TextStyle(color: primary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600),
+                      ),
+                    ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              _imageFile = Rx<File?>(null);
+              mobileController.clear();
+              locationController.clear();
+              Get.back();
+            },
+            child: Text("CANCEL", style: GoogleFonts.lato(
+                fontSize: 15, color: primary, fontWeight: FontWeight.w600),),
+          ),
+
+          TextButton(
+            onPressed: () async {
+              if (mobileController.text!='' && locationController.text!='' && _imageFile.value != null) {
+                try {
+                  final Uint8List bytes = await _imageFile.value!.readAsBytes();
+                  String base64Image = base64Encode(bytes);
+                  loginController.user!.profileImg =base64Image;
+                  loginController.user!.location = locationController.text;
+                  loginController.user!.mobile = mobileController.text;
+                  await collection_drivers?.update(
+                    where.eq('_id', ObjectId.parse(loginController.user!.id)),
+                    modify.set('mobileNumber', mobileController.text)
+                        .set('location', locationController.text)
+                    .set('driverPhoto', base64Image),
+                  );
+                }catch(e){
+                  print(e);
+                }
+                print("Image uploaded.........................");
+              }else{
+                await collection_drivers?.update(
+                  where.eq('_id', ObjectId.parse(loginController.user!.id)),
+                  modify.set('mobileNumber', mobileController.text)
+                      .set('location', locationController.text),
+                );
+                print("Image not uploaded.........................");
+              }
+              _imageFile = Rx<File?>(null);
+              mobileController.clear();
+              locationController.clear();
+              Get.back();
+              refreshPage();
+              refreshPage();
+
+            },
+            child: Text("CONFIRM", style: GoogleFonts.lato(
+                fontSize: 15, color: primary, fontWeight: FontWeight.w600),),
+          ),
+        ],
+      ),
+    );
+  }
+}
